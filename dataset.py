@@ -145,14 +145,13 @@ class FastTextDataset(Dataset):
             for i in ngram:
                 hash = (hash ^ i) * base
             hash += hash >> 32
-            return hash % vocab_size
+            return hash % vocab_size + self.vocab_size + 1
         
         with open(self.filename) as csvfile:
             csv_reader = csv.reader(csvfile)
             for row in csv_reader:
                 label = int(row[0])
                 tokens = row[1].replace('\\n', ' ').lower().split()
-                tokens = [token for token in tokens if token not in self.dictionary.indices.keys()]
                 tokens = [re.sub(r'[^a-z0-9]', '', string=token) for token in tokens]
                 tokens = [token for token in tokens if not any(i.isdigit() for i in token)]
                 tokens = [token if token in self.dictionary.indices.keys() else '<unk>' for token in tokens]
@@ -160,13 +159,16 @@ class FastTextDataset(Dataset):
                 
                 ngrams = get_ngrams(word_id, n)
                 ngram_id = [hash_ngrams(ngram, n_gram_size) for ngram in ngrams]
+                ngram_id = torch.tensor(ngram_id, dtype=torch.long)
                 
-                token_id = word_id + ngram_id
+                token_id = torch.cat([word_id, ngram_id])
+                # print("text: {}".format(row[1]))
+                # print("token_id: {}".format(token_id))
                 
                 self.lens.append(len(token_id))
                 self.data.append((row[1], tokens, token_id, label, len(token_id)))
 
-        self.total_size = self.vocab_size + n_gram_size
+        self.total_size = self.vocab_size + n_gram_size + 1
         # raise NotImplementedError
         #################################################################################################
 
