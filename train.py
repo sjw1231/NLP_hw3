@@ -29,7 +29,7 @@ def get_args():
     parser.add_argument("--save-interval", default=1, type=int)
     parser.add_argument("--save-dir", default="./checkpoints")
     parser.add_argument("--model-type", default="lstm", choices=["bow", "fast_text", "cnn", "lstm"])
-    parser.add_argument("--pooling", default="last", choices=["max", "mean", "sum", "last", "first"])
+    parser.add_argument("--pooling", default="max", choices=["max", "mean", "sum", "last", "first"])
     args = parser.parse_args()
     return args
 
@@ -129,11 +129,13 @@ def train(args):
     valid_loss = []
     valid_acc = []
 
-    save_dir = args.save_dir + '_' + args.model_type
+    # save_dir = args.save_dir + '_' + args.model_type
+    save_dir = args.save_dir + '_' + args.model_type + '_' + args.pooling + '_' + str(args.num_layers)
     
     os.makedirs(save_dir, exist_ok=True) 
 
-    log_file_path = "logs/" + args.model_type + ".log"
+    # log_file_path = "logs/" + args.model_type + ".log"
+    log_file_path = "logs/" + args.model_type  + '_' + args.pooling + '_' + str(args.num_layers) + ".log"
     logging.basicConfig(level=logging.INFO,  # 设置日志显示级别
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S',  # 指定日期时间格式
