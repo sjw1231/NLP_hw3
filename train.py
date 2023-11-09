@@ -29,6 +29,7 @@ def get_args():
     parser.add_argument("--save-interval", default=1, type=int)
     parser.add_argument("--save-dir", default="./checkpoints")
     parser.add_argument("--model-type", default="lstm", choices=["bow", "fast_text", "cnn", "lstm"])
+    parser.add_argument("--pooling", default="last", choices=["max", "mean", "sum", "last", "first"])
     args = parser.parse_args()
     return args
 
@@ -114,7 +115,7 @@ def train(args):
     elif args.model_type == 'fast_text':
         model = FastText(train_dataset.total_size, args.embedding_size, dictionary.pad())
     elif args.model_type == 'lstm':
-        model = LSTM(len(dictionary), args.embedding_size, args.hidden_size, args.num_layers, dictionary.pad())
+        model = LSTM(len(dictionary), args.embedding_size, args.hidden_size, args.num_layers, dictionary.pad(), pooling=args.pooling)
     elif args.model_type == 'cnn':
         model = CNN(len(dictionary), args.embedding_size, args.hidden_size, dictionary.pad())
 
@@ -180,7 +181,7 @@ def train(args):
         valid_acc.append(acc)
 
         if acc > best_acc:
-            torch.save(model, save_dir + "/best_checkpoint.pt")
+            torch.save(model.state_dict(), save_dir + "/best_checkpoint.pt")
             best_acc = acc
 
         logging.info(("Epoch: %d, \t Valid, Loss: %0.8f, \t Acc: %0.3f , \t Best Acc: %.3f" % (epoch + 1, loss, acc, best_acc)))
@@ -209,7 +210,7 @@ def train(args):
         plt.savefig(save_dir + "/loss_and_acc.png")
         plt.close()
     
-    model = torch.load(save_dir + "/best_checkpoint.pt")
+    model.load_state_dict(torch.load(save_dir + "/best_checkpoint.pt"))
     valid_loss, valid_acc = evaluate(args, model, valid_loader, criterion)
     test_loss, test_acc = evaluate(args, model, test_loader, criterion)
     
